@@ -46,7 +46,7 @@ class WatchPoint:
             if pix[0] < 128 and pix[1] < 128 and pix[2] > 192: 
                 # red is just strong
                 self.isRed = 1
-            if pix[2] > 192 and bgRatio > 0.45:
+            if pix[2] > 192 and (pixFLOAT[1] > pixFLOAT[0]) and bgRatio > 0.45:
                 # even if R component is high, big ratio means more likely to be amber
                 self.isRed = 0
             return "(%d,%d) %s ratio: %.2f" % (self.x,self.y,pix,bgRatio)
