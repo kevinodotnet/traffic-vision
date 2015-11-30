@@ -36,7 +36,6 @@ class WatchPoint:
             pix = frame[self.y,self.x]
             pixFLOAT = frame[self.y,self.x].astype(np.float64)
             bgRatio = abs((pixFLOAT[0] / pixFLOAT[1]) - 1)
-            print "(%d,%d) %s ratio: %.2f" % (self.x,self.y,pix,bgRatio)
             self.isRed = 0
             if pix[2] > 192 and bgRatio < 0.25:
                 # red is strong, blue/green in close enough balance to not be confused with 'amber'
@@ -47,6 +46,10 @@ class WatchPoint:
             if pix[0] < 128 and pix[1] < 128 and pix[2] > 192: 
                 # red is just strong
                 self.isRed = 1
+            if pix[2] > 192 and bgRatio > 0.45:
+                # even if R component is high, big ratio means more likely to be amber
+                self.isRed = 0
+            return "(%d,%d) %s ratio: %.2f" % (self.x,self.y,pix,bgRatio)
 
         if False:
             pixelAt = frame[y,x]
@@ -114,14 +117,19 @@ def unittest (conffile):
             if ret == False:
                 print "unexpected end of file"
                 exit(-1)
+            for i in range(0,len(t['red'])):
+                wp = watchPoints[i]
+                debug = wp.processframe(frame)
+                print "frameNum:%d passed:na index:%d detectedRed:%d debug >>> %s" % (frameNum,i,wp.isRed,debug)
+                wp.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
 
         t['failed'] = 0
         for i in range(0,len(t['red'])):
             wp = watchPoints[i]
             red = t['red'][i]
-            wp.processframe(frame)
+            debug = wp.processframe(frame)
             passed = red == wp.isRed
-            print "passed:%d index:%d shouldBeRed:%d detectedRed:%d" % (passed,i,red,wp.isRed)
+            print "frameNum:%d passed:%d index:%d shouldBeRed:%d detectedRed:%d debug >>> %s" % (frameNum,passed,i,red,wp.isRed,debug)
             wp.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
             if passed == 0:
                 t['failed'] = 1
@@ -134,6 +142,7 @@ def unittest (conffile):
         #if failed == 1:
         #    key = cv2.waitKey()
 
+    print "DONE PARSING..."
     while True:
         failCount = 0
         for t in conf['tests']:
@@ -141,6 +150,7 @@ def unittest (conffile):
                 failCount += 1
                 cv2.imshow('frame',t['frame'])
                 key = cv2.waitKey(500)
+        print "DONE PARSING; failCount: %d" % failCount
         if failCount == 0:
             exit(0)
 
