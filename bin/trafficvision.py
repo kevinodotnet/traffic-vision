@@ -115,22 +115,43 @@ def unittest (conffile):
                 print "unexpected end of file"
                 exit(-1)
 
-        smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
-        cv2.imshow('frame',smallframe)
-
+        t['failed'] = 0
         for i in range(0,len(t['red'])):
             wp = watchPoints[i]
             red = t['red'][i]
             wp.processframe(frame)
             passed = red == wp.isRed
             print "passed:%d index:%d shouldBeRed:%d detectedRed:%d" % (passed,i,red,wp.isRed)
+            wp.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
             if passed == 0:
-                wp.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
-                smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
-                cv2.imshow('frame',smallframe)
-                key = cv2.waitKey()
+                t['failed'] = 1
+     
+        paint(frameNum,"failed:%d" % t['failed'],frame,cap)
+        smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+        t['frame'] = smallframe
+        #cv2.imshow('frame',smallframe)
+        #key = cv2.waitKey(1)
+        #if failed == 1:
+        #    key = cv2.waitKey()
 
-    cap.release()
+    while True:
+        failCount = 0
+        for t in conf['tests']:
+            if t['failed'] == 1:
+                failCount += 1
+                cv2.imshow('frame',t['frame'])
+                key = cv2.waitKey(500)
+        if failCount == 0:
+            exit(0)
+
+def paint (frameNum,tag,frame,cap):
+
+    vid_width = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
+    vid_height = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
+
+    cv2.rectangle(frame,(0,0),(vid_width,100),(0,0,0),-1)
+    cv2.putText(frame, "time:%0.1f frame:%d file:%s" % ((cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC)/1000),frameNum,tag), 
+            (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
 
 
 def processframe (frameNum,fileTag,frame,cap,watchPoints):
@@ -138,12 +159,7 @@ def processframe (frameNum,fileTag,frame,cap,watchPoints):
     print "frame %d time %d " % (frameNum,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
     stageChange = 0
 
-    vid_width = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
-    vid_height = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
-
-    cv2.rectangle(frame,(0,0),(vid_width,100),(0,0,0),-1)
-    cv2.putText(frame, "time:%0.1f frame:%d file:%s" % ((cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC)/1000),frameNum,fileTag), 
-            (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
+    paint(frameNum,fileTag,frame,cap)
 
     for i, w in enumerate(watchPoints):
 
