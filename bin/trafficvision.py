@@ -166,7 +166,6 @@ def paint (frameNum,tag,frame,cap):
 
 def processframe (frameNum,fileTag,frame,cap,watchPoints):
 
-    print "frame %d time %d " % (frameNum,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
     stageChange = 0
 
     paint(frameNum,fileTag,frame,cap)

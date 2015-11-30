@@ -91,6 +91,11 @@ print success
 
 cycleOutputAtFrameNum = 99999999
 
+current_milli_time = lambda: int(round(time.time() * 1000))
+
+now_time = current_milli_time()
+
+
 while(True):
 
     ret, frame = cap.read()
@@ -117,12 +122,13 @@ while(True):
     else:
         stageChange = tv.processframe(frameNum,fileTag,frame,cap,watchPoints)
         if frameNum > 0 and frameNum % 30 == 0:
-            now_time = calendar.timegm(time.gmtime())
+            prev_time = now_time
+            now_time = current_milli_time()
             processing_fps = frameNum/(now_time-start_time)
+            print "frame %d time %d timeFor %d " % (frameNum,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC),now_time-prev_time)
             #print "processing fps: %0.1f" % processing_fps
             smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
             cv2.imshow('frame',smallframe)
-            #cv2.imshow('frame',frame)
         vw_out.write(frame)
         if stageChange:
             allRed = 1
