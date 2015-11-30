@@ -1,47 +1,78 @@
 import boto3
+import sys
+import re
+import datetime
+import pprint
 
-# http://boto3.readthedocs.org/en/latest/reference/services/elastictranscoder.html
+pp = pprint.PrettyPrinter(indent=2)
 
 client = boto3.client('elastictranscoder')
 
-pipeline = None
+# full S3 bucket URL, example: s3://s3.kevino.ca/traffic-vision/20151126-leiper-westwellington-harmer
+action = sys.argv[1]
 
+# all actions require the default pipeline
+pipeline = None
 resp = client.list_pipelines()
 pipelines = resp['Pipelines']
 for p in pipelines:
     if p['Name'] == 'default-pipeline':
         pipeline = p
-
 if pipeline == None:
     print "Could not find default pipeline"
     exit(0)
 
-if True:
-    jobs = client.list_jobs_by_pipeline(PipelineId = pipeline['Id'])
-    jobs = client.list_jobs_by_status(Status = 'Error')
-    for job in jobs['Jobs']:
-        print "%s :: %s" % (job['Id'],job['Status'])
-        if job['Status'] == 'Error':
-            print job['Output']['StatusDetail']
-            print ""
+if action == 'transcode':
+    inkey = sys.argv[2]
+    # for now we are cheating, and bucket is stripped because it is defined in AWS pipeline
+    inkey = re.sub(r'^s3://[^/]+/','',inkey)
+    outkey = re.sub(r'\....$','.mp4',inkey)
+
+    presetId = '1351620000001-000010' # mp4, System preset generic 720p
+    jobIn = { 'Key': inkey }
+    jobOut = { 'Key': outkey, 'PresetId': presetId }
+    job = client.create_job(PipelineId = pipeline['Id'],Input = jobIn,Output = jobOut)
+    print ""
+    pp.pprint(job)
+    print ""
     exit(0)
 
-presetId = '1351620000001-000010' # mp4, System preset generic 720p
+if action == 'status':
+    status = sys.argv[2]
 
-for i in range(1002,1100):
-    jobIn = { 'Key': 'tmp/leiper_traffic_video/20151113_islandpark_byron_%d.mov' % i}
-    jobOut = { 'Key': 'tmp/leiper_traffic_video/20151113_islandpark_byron_%d.mp4' % i, 'PresetId': presetId }
-    job = client.create_job(PipelineId = pipeline['Id'],Input = jobIn,Output = jobOut)
-    print job
+    getmore = 1
+    page_token = ''
+    while getmore == 1:
+        getmore = 0
 
-exit(0)
+        if status == 'all':
+            print "Getting all jobs in default-pipelin"
+            if page_token == '':
+                jobs = client.list_jobs_by_pipeline(PipelineId = pipeline['Id'])
+            else:
+                jobs = client.list_jobs_by_pipeline(PipelineId = pipeline['Id'],PageToken = page_token)
+        else:
+            print "Getting jobs in status %s" % status
+            if page_token == '':
+                jobs = client.list_jobs_by_status(Status = status)
+            else:
+                jobs = client.list_jobs_by_status(Status = status, PageToken = page_token)
 
+        #pp.pprint(jobs)
+        if 'NextPageToken' in jobs:
+            getmore = 1
+            page_token = jobs['NextPageToken']
 
-print jobIn
-print jobOut
+        for job in jobs['Jobs']:
+            submitted = datetime.datetime.fromtimestamp(job['Timing']['SubmitTimeMillis']/1000.0)
+            extra = ''
+            if job['Status'] == 'Error':
+                extra = job['Output']['StatusDetail']
+            print "%s %s %s %s %s" % (submitted,job['Id'], job['Status'],job['Input']['Key'],extra)
+            #pp.pprint(job)
+    exit(0)
 
-print job
-
+print "Unknown action: '%s'" % action
 
 # s3 = boto3.resource('s3')
 # for bucket in s3.buckets.all():
