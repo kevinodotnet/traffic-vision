@@ -123,7 +123,7 @@ from
 group by
 	num
 having 
-	sum(id) < 4
+	sum(id) < 6
 order by
 	sum(id), rand()
 limit 1
