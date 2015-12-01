@@ -135,11 +135,18 @@ class TrafficVision {
 			select 
 				c.id,
 				c.url,
-				c.video
+				c.video,
+				sum(case when cc.id is null then 0 else 1 end) counts
 			from tv_videoclip c
+				left join tv_count cc on cc.clip = c.id
 			where
 				c.video = :videoid
+			group by
+				c.id,
+				c.url,
+				c.video
 			order by
+				sum(case when cc.id is null then 0 else 1 end),
 				rand()
 			limit 1
 		";
@@ -166,7 +173,15 @@ class TrafficVision {
 		$query = $db->prepare($sql);
 		$query->execute(array('videoid'=>$videoid));
 		$res = $query->fetchAll(PDO::FETCH_ASSOC);
-		return $res[0];
+		$res = $res[0];
+
+		$sql = " select count(c.id) counts, count(distinct(userhash)) users from tv_count c join tv_videoclip vc on vc.id = c.clip where vc.video = :videoid ";
+		$query = $db->prepare($sql);
+		$query->execute(array('videoid'=>$videoid));
+		$stats = $query->fetchAll(PDO::FETCH_ASSOC);
+		$res['stats'] = $stats[0];
+
+		return $res;
 	}
 
 	static public function getVideoClips ($videoid) {

@@ -45,6 +45,10 @@ function top() {
 		body {
 			padding: 5px;
 		}
+		.footer {
+			margin-top: 20px;
+			border: #c0c0c0 solid 1px;
+		}
 		</style>
 	</head>
 	<body>
@@ -53,6 +57,25 @@ function top() {
 
 function bottom() {
 	?>
+	<div class="jumbotron footer">
+	<div class="row">
+		<div class="col-sm-4 text-center">
+			<h4>Traffic Vision<br/><small>a citizen science experiment</small></h4>
+		</div>
+		<div class="col-sm-4 text-center">
+			<h4>Coding:<br/>
+			<small>
+			Kevin O'Donnell<br/>
+			kevino@kevino.net<br/>
+			<a href="http://twitter.com/odonnell_k">@odonnell_k</a><br/>
+			<a href="http://kevino.ca">kevino.ca</a></small></h4>
+		</div>
+		<div class="col-sm-4 text-center">
+			<h4>Contributors:<br/>
+			<small>You! And many people just like you!</small></h4>
+		</div>
+	</div>
+	</div>
 	<script type="text/javascript">
 	
 		var _gaq = _gaq || [];

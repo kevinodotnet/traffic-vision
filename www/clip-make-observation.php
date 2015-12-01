@@ -64,14 +64,14 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 	<div class="col-sm-9">
 		<h1><?php print $video['title']; ?> <small>(clip #<?php print $clip['id']; ?>)</small></h1>
 	</div>
-	<div class="col-sm-3">
+	<div class="col-sm-3 text-right">
 		<?php
+		$stats = $video['stats'];
+		print "<b>{$stats['users']} users</b> have done <b>{$stats['counts']} counts</b> so far!";
 		$savedcount = $_REQUEST['savedcount'];
 		if ($savedcount != '') {
 			?>
-			<small>Thanks! Your data has been saved 
-			(<a href="view-count.php?id=<?php print $savedcount; ?>">count# <?php print $savedcount; ?></a>)
-			</small>
+			<br/><small>Thanks! <a href="view-count.php?id=<?php print $savedcount; ?>">Your count has been saved</a>.</small>
 			<?php
 		}
 		?>
@@ -200,7 +200,8 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 <li>Cyclist runs through red light</li>
 <li>Cyclist riding through north side crosswalk (to get to eb Byron Park path) rather than make proper left turn</li>
 </ul>
-	</p>
+<b>Contact kevino@kevino.net or @odonnell_k if you need help or have suggestions!</b>
+</p>
 
 
 
@@ -208,7 +209,17 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 </div>
 
 <script>
+doCount = 1;
+$( "input" ).focus(function() {
+	doCount --;
+});
+$( "input" ).focusout(function() {
+	doCount ++;
+});
 $( "body" ).keypress(function(e) {
+	if (doCount == 0) {
+		return;
+	}
 	var code = e.keyCode || e.which;
 	var k = String.fromCharCode(code);
 	if (k == 'c') { up('car'); }
