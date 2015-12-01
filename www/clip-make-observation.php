@@ -148,7 +148,7 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 	</div>
 	<div class="col-sm-7">
 		<div class="embed-responsive embed-responsive-16by9">
-			<video autoload="true" controls="controls" class="embed-responsive-item">
+			<video id="player" autoload="true" controls="controls" class="embed-responsive-item">
 				<source type="video/mp4" src="<?php print $clip['url']; ?>"/>
 			</video>
 		</div>
@@ -216,9 +216,13 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 doCount = 1;
 $( "input" ).focus(function() {
 	doCount --;
+	$('video').each( function(i) {
+		this.pause();
+	});
 });
 $( "input" ).focusout(function() {
 	doCount ++;
+	// $('video').each( function(i) { this.play(); });
 });
 $( "body" ).keypress(function(e) {
 	if (doCount == 0) {
@@ -230,6 +234,7 @@ $( "body" ).keypress(function(e) {
 	if (k == 'b') { up('bike'); }
 	if (k == 'p') { up('ped'); }
 });
+
 </script>
 
 <?php
