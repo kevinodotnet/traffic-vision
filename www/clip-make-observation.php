@@ -100,6 +100,7 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 			<li>Count all the cars, bikes and pedestrians, even after the light cycle changes...</li>
 			<li>... ignore anything already in the intersection at the start (was counted in the previous clip)</li>
 			<li>Use the 'observation' fields to make ad-hoc comments. Red light running? Jaywalking? Etc</li>
+			<li>Count all pedestrians, even if they are on a sidewalk that doesn't "cross" a road.</li>
 			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
 		</ul>
 		<b>Count:</b> <small>(hint: use 'c', 'b' and 'p' keys to count!)</small>
@@ -152,11 +153,12 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 		<b>Suggested Observations and Things To Look For</b>
 		<ul>
 			<li>Failing to stop at stop-sign. Running reds.</li>
-			<li>Speeding (if you judge id faster than normal).</li>
+			<li>Speeding (if you judge it faster than normal).</li>
 			<li>Cars mounting sidewalks, using pedestrian spaces, to get around other cars.</li>
 			<li>Bikes on sidewalks/crosswalks</li>
 			<li>Cars blocking crosswalks, bike lanes</li>
-			<li>Jaywalking; also jaywalking because cross walks never go on.</li>
+			<li>Jaywalking; or crossing against the hand because the walk signal never goes on</li>
+			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
 		</ul>
 		<b>Optional but helpful</b>: if you can note the "frame#" as well that's helpful.
 	</div>
