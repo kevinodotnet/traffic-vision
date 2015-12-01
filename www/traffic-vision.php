@@ -27,7 +27,8 @@ class TrafficVision {
 				c.userhash,
 				vc.url video_url,
 				p.title,
-				p.streetview
+				p.streetview,
+				v.id videoid
 			from tv_count c
 				join tv_videoclip vc on vc.id = c.clip
 				join tv_video v on v.id = vc.video

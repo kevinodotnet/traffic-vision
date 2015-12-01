@@ -93,7 +93,8 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 <input type="hidden" name="clipid" value="<?php print $clip['id']; ?>"/>
 
 <div class="row">
-	<div class="col-sm-6">
+	<div class="col-sm-5">
+		<div style="font-size: 80%;">
 		<b>Quick Instructions:</b>
 		<ul>
 			<li><a target="_blank" href="<?php print $video['streetview']; ?>">Open Google StreetView</a> to familiarize yourself with this street/intersection.</li>
@@ -103,6 +104,7 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 			<li>Count all pedestrians, even if they are on a sidewalk that doesn't "cross" a road.</li>
 			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
 		</ul>
+		</div>
 		<b>Count:</b> <small>(hint: use 'c', 'b' and 'p' keys to count!)</small>
 		<div class="row">
 			<div class="col-sm-4 form-group">
@@ -144,7 +146,7 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 		}
 		?>
 	</div>
-	<div class="col-sm-6">
+	<div class="col-sm-7">
 		<div class="embed-responsive embed-responsive-16by9">
 			<video autoload="true" controls="controls" class="embed-responsive-item">
 				<source type="video/mp4" src="<?php print $clip['url']; ?>"/>

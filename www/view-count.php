@@ -43,7 +43,9 @@ top();
 		</ul>
 		<?php
 	}
+
 	?>
+	<a class="btn btn-primary" href="clip-make-observation.php?videoid=<?php print $count['videoid']; ?>">Contribute by doing a count!</a>
 	</div>
 	
 	<div class="col-sm-6">
@@ -56,6 +58,7 @@ top();
 </div>
 
 <?php
+#pr($count);
 bottom();
 
 
