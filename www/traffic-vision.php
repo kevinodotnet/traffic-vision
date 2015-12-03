@@ -11,6 +11,133 @@ class TrafficVision {
 
 	const OBSERVATION_COUNT = 20;
 
+	static public function getVideoCount ($videoid) {
+		$db = self::getDB();
+		$sql = " 
+			select tag, max(c) max_c from (
+			select
+				v.id videoid,
+				vc.id clipid,
+				c.id sampleid,
+				d.tag,
+				count(1) c
+			from tv_video v
+				join tv_videoclip vc on vc.video = v.id
+				join tv_count c on c.clip = vc.id
+				join tv_count_data d on d.count = c.id
+			where 
+				v.id = :videoid
+			group by 
+				v.id, 
+				vc.id, 
+				c.id, 
+				d.tag
+			) t group by tag;
+		";
+		$query = $db->prepare($sql);
+		$query->execute(array('videoid'=>$videoid));
+		$res = $query->fetchAll(PDO::FETCH_ASSOC);
+
+		$tags = array();
+		foreach ($res as $r) {
+			$tags[$r['tag']] = $r['max_c'];
+		}
+
+		$sql = " 
+			select
+				v.id videoid,
+				vc.id clipid,
+				c.id sampleid,
+				d.tag,
+				d.num,
+				d.note,
+				d.frame,
+				c.created sampletime,
+				c.userhash
+			from tv_video v
+				join tv_videoclip vc on vc.video = v.id
+				join tv_count c on c.clip = vc.id
+				join tv_count_data d on d.count = c.id
+			where v.id = :videoid
+			order by 
+				v.id, 
+				vc.id, 
+				c.id, 
+				d.tag
+			;
+		";
+		$query = $db->prepare($sql);
+		$query->execute(array('videoid'=>$videoid));
+		$res = $query->fetchAll(PDO::FETCH_ASSOC);
+
+		# "fold" the results to one row per sampleID
+
+		$data = array();
+		foreach ($res as $r) {
+
+			if (!isset($data[$r['clipid']])) {
+				#pr("NEW for ".$r['clipid'] . ' sample: ' . $r['sampleid']);
+				# initialize a new clip
+
+				$clip = array();
+
+				# clip level details
+				foreach (array('videoid','clipid') as $k) { $clip[$k] = $r[$k]; }
+
+				#$cliptags = array(); foreach ($tags as $k => $v) { $cliptags[$k] = array(); }
+				#$clip['tags'] = $cliptags;
+
+				$clip['samples'] = array();
+
+				#$clip['counts'] = array();
+				#$clip['observations'] = array();
+
+				$data[$r['clipid']] = $clip;
+
+			}
+
+			# a clip has multiple samples
+			$clip = $data[$r['clipid']];
+
+			# a sample has multiple rows, one for each tag
+			$samples = $clip['samples'];
+
+			if (!isset($samples[$r['sampleid']])) {
+				$samples[$r['sampleid']] = array(
+					'sampleid' => $r['sampleid'],
+					'sampletime' => $r['sampletime'],
+					'userhash' => $r['userhash'],
+					'counts' => array(),
+					'observations' => array()
+				);
+			}
+			$sample = $samples[$r['sampleid']];
+
+ 			if ($r['tag'] == '_OBSERVATION_') {
+ 				$obs = &$sample['observations'];
+ 				$obs[] = array(
+ 					'note' => $r['note'],
+ 					'frame' => $r['frame']
+ 				);
+ 			} else {
+ 				$counts = &$sample['counts'];
+ 				$counts[$r['tag']] = $r['num'];
+ 			}
+
+			$samples[$r['sampleid']] = $sample;
+			$clip['samples'] = $samples;
+			$data[$r['clipid']] = $clip;
+
+		}
+
+		$res = array(
+			'meta' => $tags,
+			'data' => $data
+		);
+
+		return $res;
+	}
+
 	static public function getDB() {
 		include("config.php");
 		return $db;
