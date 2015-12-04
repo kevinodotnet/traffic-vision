@@ -5,6 +5,11 @@ import time
 import calendar
 import sys
 import trafficvision as tv
+import logging
+
+logger1 = tv.logger()
+
+jobFile = sys.argv[1]
 
 in_file = sys.argv[1]
 out_file = sys.argv[2]

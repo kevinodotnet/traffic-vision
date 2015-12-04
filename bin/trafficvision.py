@@ -7,6 +7,9 @@ import calendar
 import sys
 import json
 import os
+import logging
+
+__TV_LOGGER__ = None
 
 class WatchPoint:
     y = 0
@@ -153,6 +156,26 @@ def unittest (conffile):
         print "DONE PARSING; failCount: %d" % failCount
         if failCount == 0:
             exit(0)
+
+
+def logger ():
+    global __TV_LOGGER__
+    if __TV_LOGGER__ != None:
+        return __TV_LOGGER__
+    lgr = logging.getLogger(__name__)
+    lgr.setLevel(logging.DEBUG)
+    # add a file handler
+    now = time.time()
+    fh = logging.FileHandler('tv-%d.log' % now)
+    fh.setLevel(logging.DEBUG)
+    # create a formatter and set the formatter for the handler.
+    frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(frmt)
+    # add the Handler to the logger
+    lgr.addHandler(fh)
+
+    __TV_LOGGER__ = lgr;
+    return __TV_LOGGER__
 
 def paint (frameNum,tag,frame,cap):
 
