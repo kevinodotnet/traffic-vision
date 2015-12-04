@@ -121,7 +121,7 @@ def unittest (conffile):
                 wp = watchPoints[i]
                 debug = wp.processframe(frame)
                 print "frameNum:%d passed:na index:%d detectedRed:%d debug >>> %s" % (frameNum,i,wp.isRed,debug)
-                wp.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
+                wp.paint(frame,cap.get(cv2.CAP_PROP_POS_MSEC))
 
         t['failed'] = 0
         for i in range(0,len(t['red'])):
@@ -130,7 +130,7 @@ def unittest (conffile):
             debug = wp.processframe(frame)
             passed = red == wp.isRed
             print "frameNum:%d passed:%d index:%d shouldBeRed:%d detectedRed:%d debug >>> %s" % (frameNum,passed,i,red,wp.isRed,debug)
-            wp.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
+            wp.paint(frame,cap.get(cv2.CAP_PROP_POS_MSEC))
             if passed == 0:
                 t['failed'] = 1
      
@@ -156,11 +156,11 @@ def unittest (conffile):
 
 def paint (frameNum,tag,frame,cap):
 
-    vid_width = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
-    vid_height = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
+    vid_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    vid_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     cv2.rectangle(frame,(0,0),(vid_width,100),(0,0,0),-1)
-    cv2.putText(frame, "time:%0.1f frame:%d file:%s" % ((cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC)/1000),frameNum,tag), 
+    cv2.putText(frame, "time:%0.1f frame:%d file:%s" % ((cap.get(cv2.CAP_PROP_POS_MSEC)/1000),frameNum,tag), 
             (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
 
 
@@ -176,14 +176,14 @@ def processframe (frameNum,fileTag,frame,cap,watchPoints):
 
         w.processframe(frame)
 
-        w.paint(frame,cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC))
+        w.paint(frame,cap.get(cv2.CAP_PROP_POS_MSEC))
 
         same = (w.isRed == prevRed)
         if same == 0:
             if w.isRed:
-                w.redStart = cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC)
+                w.redStart = cap.get(cv2.CAP_PROP_POS_MSEC)
             else:
-                wasRedFor = cap.get(cv2.cv.CV_CAP_PROP_POS_MSEC) - w.redStart
+                wasRedFor = cap.get(cv2.CAP_PROP_POS_MSEC) - w.redStart
                 print "RED TO GREEN detected; wasRedFor: %d" % wasRedFor
 
             print "offset:%d prevRed:%d nowRed:%d same:%d" % (i,prevRed,w.isRed,same)
