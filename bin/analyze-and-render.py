@@ -131,7 +131,6 @@ while(True):
         vid_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         vid_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         out_size = (vid_width,vid_height)
-        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
         vw_out = cv2.VideoWriter()
         success = vw_out.open("%s_%.09d.mov" % (out_file,frameNum),fourcc,out_fps,out_size,True) 
 
