@@ -8,6 +8,7 @@ import sys
 import json
 import os
 import logging
+import os.path
 
 __TV_LOGGER__ = None
 
@@ -18,7 +19,6 @@ class WatchPoint:
     redStart = 0
     def __str__(self):
         return "WatchPoint(x:%d,y:%d,red:%s)" % (self.x,self.y,self.isRed)
-
 
     def paint(self,frame,clipMSEC):
 
@@ -79,6 +79,106 @@ class WatchPoint:
                 isRed = 1
             else:
                 isRed = 0
+
+class VideoJob:
+
+    # configuration as loaded from JSON file
+    conf = None
+
+    # location of red lights that are watched
+    watchPoints = []
+
+    # list of fully resolve input files
+    inFiles = []
+
+    # Current video reader and index into inFiles that it is reading from
+    capIndex = None
+    cap = None
+    frameNum = -1 # global across all infiles
+    localFrameNum = -1 # relative to current infile
+
+    def loadVideoJobFile (self,confFile):
+        """Load a job from a file"""
+
+        loadFailure = 0
+        
+        log.info('loading conf file: %s' % confFile)
+        f_conf = open(confFile,'r')
+        self.conf = json.loads(f_conf.read())
+        f_conf.close()
+
+        """Parse the supplied configuration"""
+        log.info('%s' % self.conf)
+
+        for w in self.conf['watchpoints']:
+            wp = WatchPoint()
+            wp.x = w['x'];
+            wp.y = w['y'];
+            self.watchPoints.append(wp)
+
+        # make sure all the input files exist
+        for f in self.conf['in']['files']:
+            inFileFull = "%s/%s" % (os.path.dirname(confFile),f)
+            if os.path.isfile(inFileFull) == False:
+                log.error('input video file is not a file: %s' % inFileFull)
+                loadFailure = 1
+            else:
+                self.inFiles.append(inFileFull)
+
+        if loadFailure == 1:
+            log.error('Load failures occurred')
+            return False
+
+    def readFrame (self):
+
+        if self.cap == None:
+            log.info('Initializing first video reader...')
+            self.capIndex = 0
+            self.cap = cv2.VideoCapture(self.inFiles[self.capIndex])
+
+        ret, frame = self.cap.read()
+        if ret == True:
+            self.frameNum += 1
+            self.localFrameNum += 1
+            log.info('read frame (%d/%d)' % (self.localFrameNum,self.frameNum))
+            return (True,frame)
+
+        log.info('No more frames left; capIndex: %d; moving to next file' % self.capIndex)
+        self.cap.release()
+
+        self.capIndex += 1
+        if (self.capIndex >= len(self.inFiles)):
+            log.info('No more inFiles to read from')
+            return (False,None)
+
+        log.info('reading from %s' % self.inFiles[self.capIndex])
+        # capIndex is changed, so call self again and next frame should pop out
+        self.cap = cv2.VideoCapture(self.inFiles[self.capIndex])
+        self.localFrameNum = -1
+        return self.readFrame()
+
+    def runJob(self):
+
+        cv2.namedWindow('frame')
+        cv2.moveWindow('frame',50,50)
+
+        while True:
+
+            ret, frame = self.readFrame()
+            if ret == False:
+                log.info('done reading input files')
+                break;
+                exit(0)
+
+            if self.conf['frameskip'] > 0 and self.frameNum % self.conf['frameskip'] != 0:
+                stageChange = processframe(self.frameNum,'filenametag',frame,self.cap,self.watchPoints)
+            else:
+                stageChange = processframe(self.frameNum,'filenametag',frame,self.cap,self.watchPoints)
+
+            smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+            cv2.imshow('frame',smallframe)
+            key = cv2.waitKey(1)
+
 
 def unittest (conffile):
 
@@ -164,15 +264,18 @@ def logger ():
         return __TV_LOGGER__
     lgr = logging.getLogger(__name__)
     lgr.setLevel(logging.DEBUG)
-    # add a file handler
-    now = time.time()
-    fh = logging.FileHandler('tv-%d.log' % now)
-    fh.setLevel(logging.DEBUG)
-    # create a formatter and set the formatter for the handler.
-    frmt = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(frmt)
-    # add the Handler to the logger
-    lgr.addHandler(fh)
+
+    frmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s.%(funcName)s %(message)s")
+
+    #fh = logging.FileHandler('tv-%d.log' % now)
+    #fh.setLevel(logging.DEBUG)
+    #fh.setFormatter(frmt)
+    #lgr.addHandler(fh)
+
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.DEBUG)
+    sh.setFormatter(frmt)
+    lgr.addHandler(sh)
 
     __TV_LOGGER__ = lgr;
     return __TV_LOGGER__
@@ -215,3 +318,4 @@ def processframe (frameNum,fileTag,frame,cap,watchPoints):
 
     return stageChange
 
+log = logger()

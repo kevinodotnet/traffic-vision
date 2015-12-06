@@ -6,10 +6,14 @@ import calendar
 import sys
 import trafficvision as tv
 import logging
+import json
 
-logger1 = tv.logger()
+log = tv.logger()
 
-jobFile = sys.argv[1]
+videoJob = tv.VideoJob()
+videoJob.loadVideoJobFile(sys.argv[1])
+videoJob.runJob()
+exit(0)
 
 in_file = sys.argv[1]
 out_file = sys.argv[2]
@@ -37,35 +41,9 @@ def mouse_click(event, x, y, flags, param):
         smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow('frame',smallframe)
 
-frameskip = 3
-startskip = 0 #30*30# 400
-watchPoints = []
-watchRadius = 5
-
 cv2.namedWindow('frame')
 cv2.setMouseCallback('frame', mouse_click)
 cv2.moveWindow('frame',100,100)
-
-if True:
-    # Wellington Harmer
-    wp = tv.WatchPoint()
-    wp.x = 1015
-    wp.y = 410
-    watchPoints.append(wp)
-    wp = tv.WatchPoint()
-    wp.x = 1595
-    wp.y = 338
-    watchPoints.append(wp)
-
-    # IPD, Byron
-    wp = tv.WatchPoint()
-    wp.x = 428
-    wp.y = 193
-    #watchPoints.append(wp)
-    wp = tv.WatchPoint()
-    wp.x = 900
-    wp.y = 197
-    #watchPoints.append(wp)
 
 frameNum=0
 
