@@ -9,14 +9,21 @@ import json
 import os
 import logging
 import os.path
+import pprint
 
-__TV_LOGGER__ = None
+log = None
+
+pp = pprint.PrettyPrinter(indent=2)
+
+def jdefault(o):
+    return o.__dict__
 
 class WatchPoint:
     y = 0
     x = 0
     isRed = 0
     redStart = 0
+
     def __str__(self):
         return "WatchPoint(x:%d,y:%d,red:%s)" % (self.x,self.y,self.isRed)
 
@@ -56,7 +63,7 @@ class WatchPoint:
 
         if False:
             pixelAt = frame[y,x]
-            print "%d :: %d :: (red:%d) bgr: %s" % (frameNum,i,pixelAt[2],pixelAt)
+            log.info("%d :: %d :: (red:%d) bgr: %s" % (frameNum,i,pixelAt[2],pixelAt))
             pixelAtRed = pixelAt[2]
             if pixelAtRed > 256*0.75:
                 isRed = 1
@@ -82,82 +89,102 @@ class WatchPoint:
 
 class VideoJob:
 
-    # configuration as loaded from JSON file
-    conf = None
-
     # location of red lights that are watched
     watchPoints = []
 
     # list of fully resolve input files
     inFiles = []
 
+    # output files will bhe "output_[framenum]"
+    outputPrefix = "output_"
+
     # Current video reader and index into inFiles that it is reading from
     capIndex = None
     cap = None
     frameNum = -1 # global across all infiles
+    frameSkip = 3 # frames to skip between reads before returning a frame for processing
+    outFPS = 10 # FPS of output file (best result is "INPUT_FPS/frameSkip" (ie: 30/3 = 10)
     localFrameNum = -1 # relative to current infile
 
-    def loadVideoJobFile (self,confFile):
-        """Load a job from a file"""
+    # total runtime of all clips
+    clipTotalTimeOffset = 0
 
-        loadFailure = 0
+    clipEndOffset = 10 
+    inputFPS = 30
+
+    # as lights go to/from red, a snapshot of the current WatchPoints and frame data is added to this list.
+    stateChanges = []
+
+    # current video being written
+    vw_out = None
+    clipFilename = None
+    clipFirstFrame = None
+    # details of current output clip
+    clips = []
+
+    def closeVideoWriter(self):
+        log.info('Closing old video writer...')
+        self.vw_out.release()
+        self.clips.append({
+            "firstFrame" : self.clipFirstFrame,
+            "lastFrame" : self.frameNum,
+            "file" : self.clipFilename
+        })
+        self.clipTotalTimeOffset = self.cap.get(cv2.CAP_PROP_POS_MSEC)/1000
+
+    def openVideoWriter(self):
+        if self.vw_out != None:
+            self.closeVideoWriter()
+
+        self.clipFirstFrame = self.frameNum
+        vid_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        vid_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        out_size = (vid_width,vid_height)
+        fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+        self.vw_out = cv2.VideoWriter()
+        self.clipFilename = '%s_%.09d.mov' % (self.outputPrefix,self.frameNum)
+        log.info('Opening new video writer: %s' % self.clipFilename)
+        success = self.vw_out.open(self.clipFilename,fourcc,self.outFPS,out_size,True) 
+        # TODO: handle failure
+        return
+
+    def writeFrame (self,frame):
+        if self.vw_out == None:
+            self.openVideoWriter()
+        self.vw_out.write(frame)
         
-        log.info('loading conf file: %s' % confFile)
-        f_conf = open(confFile,'r')
-        self.conf = json.loads(f_conf.read())
-        f_conf.close()
-
-        """Parse the supplied configuration"""
-        log.info('%s' % self.conf)
-
-        for w in self.conf['watchpoints']:
-            wp = WatchPoint()
-            wp.x = w['x'];
-            wp.y = w['y'];
-            self.watchPoints.append(wp)
-
-        # make sure all the input files exist
-        for f in self.conf['in']['files']:
-            inFileFull = "%s/%s" % (os.path.dirname(confFile),f)
-            if os.path.isfile(inFileFull) == False:
-                log.error('input video file is not a file: %s' % inFileFull)
-                loadFailure = 1
-            else:
-                self.inFiles.append(inFileFull)
-
-        if loadFailure == 1:
-            log.error('Load failures occurred')
-            return False
-
     def readFrame (self):
 
         if self.cap == None:
-            log.info('Initializing first video reader...')
             self.capIndex = 0
-            self.cap = cv2.VideoCapture(self.inFiles[self.capIndex])
+            log.info('Initializing video reader: %s' % self.inFiles[self.capIndex].name)
+            self.cap = cv2.VideoCapture(self.inFiles[self.capIndex].name)
 
         ret, frame = self.cap.read()
         if ret == True:
             self.frameNum += 1
             self.localFrameNum += 1
-            log.info('read frame (%d/%d)' % (self.localFrameNum,self.frameNum))
             return (True,frame)
 
         log.info('No more frames left; capIndex: %d; moving to next file' % self.capIndex)
         self.cap.release()
 
+        # capIndex is changed, so call self again and next frame should pop out
         self.capIndex += 1
         if (self.capIndex >= len(self.inFiles)):
             log.info('No more inFiles to read from')
             return (False,None)
 
-        log.info('reading from %s' % self.inFiles[self.capIndex])
-        # capIndex is changed, so call self again and next frame should pop out
-        self.cap = cv2.VideoCapture(self.inFiles[self.capIndex])
+        log.info('Initializing video reader: %s' % self.inFiles[self.capIndex].name)
+        self.cap = cv2.VideoCapture(self.inFiles[self.capIndex].name)
         self.localFrameNum = -1
         return self.readFrame()
 
     def runJob(self):
+
+        log.info(self.__dict__)
+
+        cycleOutputAtFrameNum = 999999999999
 
         cv2.namedWindow('frame')
         cv2.moveWindow('frame',50,50)
@@ -170,22 +197,67 @@ class VideoJob:
                 break;
                 exit(0)
 
-            if self.conf['frameskip'] > 0 and self.frameNum % self.conf['frameskip'] != 0:
-                stageChange = processframe(self.frameNum,'filenametag',frame,self.cap,self.watchPoints)
-            else:
-                stageChange = processframe(self.frameNum,'filenametag',frame,self.cap,self.watchPoints)
+            if self.frameSkip > 0 and self.frameNum % self.frameSkip != 0:
+                # we aren't using every input frame, so skip skip skip
+                continue
 
-            smallframe = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
-            cv2.imshow('frame',smallframe)
-            key = cv2.waitKey(1)
+            stageChange = processframe(self.frameNum,frame,self.cap,self.watchPoints,self.clipTotalTimeOffset)
 
+            if self.crosshairs == 1:
+                for i, w in enumerate(self.watchPoints):
+                    cv2.rectangle(frame,(w.x-20,w.y),(w.x+20,w.y),(0,0,255),-1)
+                    cv2.rectangle(frame,(w.x,w.y-20),(w.x,w.y+20),(0,0,255),-1)
+
+            if stageChange:
+                self.stateChanges.append(json.dumps({
+                    "frameNum" : self.frameNum,
+                    "watchPoints" : self.watchPoints
+                    },default=jdefault))
+
+                allRed = 1
+                for i, w in enumerate(self.watchPoints):
+                    if w.isRed == 0:
+                        allRed = 0
+                log.info("stateChange,frame,%d,allRed,%d,time,%0.1f" % (self.frameNum,allRed,self.cap.get(cv2.CAP_PROP_POS_MSEC)/1000))
+                for i, w in enumerate(self.watchPoints):
+                    log.info(w)
+                if allRed:
+                    cycleOutputAtFrameNum = self.frameNum + (self.clipEndOffset*self.inputFPS)
+
+            self.writeFrame(frame)
+
+            showFrame(frame)
+
+            if self.frameNum >= cycleOutputAtFrameNum:
+                cycleOutputAtFrameNum = 999999999999
+                self.openVideoWriter()
+
+        # end of WhileTrue:
+        log.info('closing last video writer')
+        self.closeVideoWriter()
+
+        pp.pprint(self.stateChanges);
+        pp.pprint(self.clips)
+        pp.pprint(self.watchPoints)
+        with open('%s_jobmetadata.pickle' % self.outputPrefix, 'wb') as f:
+            savedata = {
+                    "clips" : self.clips,
+                    "stateChanges" : self.stateChanges,
+                    "watchPoints" : self.watchPoints
+                    }
+            pickle.dump(savedata, f, pickle.HIGHEST_PROTOCOL)
+
+def showFrame (frame):
+    frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+    cv2.imshow('frame',frame)
+    key = cv2.waitKey(1)
 
 def unittest (conffile):
 
     cv2.namedWindow('frame')
     cv2.moveWindow('frame',100,100)
 
-    print "reading json file: %s" % conffile
+    log.info("reading json file: %s" % conffile)
 
     f = open(conffile,'r')
     conf = json.loads(f.read())
@@ -204,7 +276,7 @@ def unittest (conffile):
     frameNum = 0
     ret, frame = cap.read()
     if ret == False:
-        print "unexpected end of file"
+        log.info("unexpected end of file")
         exit(-1)
 
     for t in conf['tests']:
@@ -259,9 +331,9 @@ def unittest (conffile):
 
 
 def logger ():
-    global __TV_LOGGER__
-    if __TV_LOGGER__ != None:
-        return __TV_LOGGER__
+    global log
+    if log != None:
+        return log
     lgr = logging.getLogger(__name__)
     lgr.setLevel(logging.DEBUG)
 
@@ -277,24 +349,29 @@ def logger ():
     sh.setFormatter(frmt)
     lgr.addHandler(sh)
 
-    __TV_LOGGER__ = lgr;
-    return __TV_LOGGER__
+    log = lgr;
+    return log
 
-def paint (frameNum,tag,frame,cap):
+def paint (frameNum,frame,cap,clipTimeOffset):
 
     vid_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     vid_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    seconds = clipTimeOffset+(cap.get(cv2.CAP_PROP_POS_MSEC)/1000)
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    time = "%d:%02d:%02.1f" % (h, m, s)
+
     cv2.rectangle(frame,(0,0),(vid_width,100),(0,0,0),-1)
-    cv2.putText(frame, "time:%0.1f frame:%d file:%s" % ((cap.get(cv2.CAP_PROP_POS_MSEC)/1000),frameNum,tag), 
+    cv2.putText(frame, "time %s frame #%d" % (time,frameNum), 
             (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
 
 
-def processframe (frameNum,fileTag,frame,cap,watchPoints):
+def processframe (frameNum,frame,cap,watchPoints,clipTimeOffset):
 
     stageChange = 0
 
-    paint(frameNum,fileTag,frame,cap)
+    paint(frameNum,frame,cap,clipTimeOffset)
 
     for i, w in enumerate(watchPoints):
 
@@ -302,19 +379,16 @@ def processframe (frameNum,fileTag,frame,cap,watchPoints):
 
         w.processframe(frame)
 
-        w.paint(frame,cap.get(cv2.CAP_PROP_POS_MSEC))
-
         same = (w.isRed == prevRed)
         if same == 0:
+            stageChange = 1
             if w.isRed:
                 w.redStart = cap.get(cv2.CAP_PROP_POS_MSEC)
             else:
-                wasRedFor = cap.get(cv2.CAP_PROP_POS_MSEC) - w.redStart
-                print "RED TO GREEN detected; wasRedFor: %d" % wasRedFor
+                w.redStart = None
+            log.info("WP(%d) state changed; frame:%d prevRed:%d isRed:%d :: %s" % (i,frameNum,prevRed,w.isRed,w))
 
-            print "offset:%d prevRed:%d nowRed:%d same:%d" % (i,prevRed,w.isRed,same)
-            stageChange = 1
-
+        w.paint(frame,cap.get(cv2.CAP_PROP_POS_MSEC))
 
     return stageChange
 
