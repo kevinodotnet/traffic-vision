@@ -8,6 +8,10 @@ import trafficvision as tv
 import logging
 import json
 import argparse
+import pprint
+
+pp = pprint.PrettyPrinter(indent=2)
+log = tv.logger()
 
 parser = argparse.ArgumentParser(description='Process video file of intersections')
 parser.add_argument('-c',action='store_const', const=1, help='Display crosshairs in output frames')
@@ -18,9 +22,9 @@ parser.add_argument('-o',metavar='output/path/prefix',help='basename of output f
 parser.add_argument('-i',metavar='filename',type=file,action='append',help='Input movie file(s) with OS globbing',nargs=argparse.REMAINDER)
 
 args = parser.parse_args()
-print ""
-print args
-print ""
+#print ""
+#print args
+#print ""
 
 # collect -w into list of WatchPoint
 watchPoints = []
@@ -30,6 +34,7 @@ for w in args.w:
     wp.x = int(xy[0])
     wp.y = int(xy[1])
     watchPoints.append(wp)
+    log.info("%s" % wp)
 
 # collect all the -i into one list
 inFiles = []
@@ -37,41 +42,11 @@ for x in args.i:
     if isinstance(x,list):
         for xx in x:
             inFiles.append(xx)
+            log.info("inputfile: %s" % xx)
     else:
         inFiles.append(x)
+        log.info("inputfile: %s" % x)
 
-if True:
-    with open('var/testDOG_jobmetadata.pickle', 'rb') as f:
-        data = pickle.load(f)
-        print ""
-        print ""
-        print ""
-        print ""
-        print ""
-        print data
-        print ""
-        print ""
-        print ""
-        print ""
-        print "State Changes"
-        print ""
-        for c in data['stateChanges']:
-            print c
-        print ""
-        print "Watch Points"
-        print ""
-        for c in data['watchPoints']:
-            print c
-        print ""
-        print "Clips"
-        print ""
-        for c in data['clips']:
-            print c
-        print ""
-        print ""
-    exit(0)
-
-log = tv.logger()
 videoJob = tv.VideoJob()
 videoJob.inFiles = inFiles
 videoJob.crosshairs = args.c
@@ -79,6 +54,7 @@ videoJob.outFPS = args.outfps
 videoJob.frameSkip = args.inskip
 videoJob.watchPoints = watchPoints
 videoJob.outputPrefix = args.o
+videoJob.saveStateChange()
 videoJob.runJob()
 exit(0)
 

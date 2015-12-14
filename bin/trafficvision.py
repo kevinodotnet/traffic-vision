@@ -106,8 +106,9 @@ class VideoJob:
     outFPS = 10 # FPS of output file (best result is "INPUT_FPS/frameSkip" (ie: 30/3 = 10)
     localFrameNum = -1 # relative to current infile
 
-    # total runtime of all clips
+    # seconds of runtime of previous clips, so 'time' in top-left grows across everything
     clipTotalTimeOffset = 0
+    last_CAP_PROP_POS_MSEC = 0
 
     clipEndOffset = 10 
     inputFPS = 30
@@ -130,7 +131,6 @@ class VideoJob:
             "lastFrame" : self.frameNum,
             "file" : self.clipFilename
         })
-        self.clipTotalTimeOffset = self.cap.get(cv2.CAP_PROP_POS_MSEC)/1000
 
     def openVideoWriter(self):
         if self.vw_out != None:
@@ -155,6 +155,7 @@ class VideoJob:
         
     def readFrame (self):
 
+
         if self.cap == None:
             self.capIndex = 0
             log.info('Initializing video reader: %s' % self.inFiles[self.capIndex].name)
@@ -164,9 +165,12 @@ class VideoJob:
         if ret == True:
             self.frameNum += 1
             self.localFrameNum += 1
+            self.last_CAP_PROP_POS_MSEC = self.cap.get(cv2.CAP_PROP_POS_MSEC)
             return (True,frame)
 
         log.info('No more frames left; capIndex: %d; moving to next file' % self.capIndex)
+        self.clipTotalTimeOffset += self.last_CAP_PROP_POS_MSEC/1000
+        log.info('clipTotalTimeOffset: %d' % self.clipTotalTimeOffset)
         self.cap.release()
 
         # capIndex is changed, so call self again and next frame should pop out
@@ -180,9 +184,19 @@ class VideoJob:
         self.localFrameNum = -1
         return self.readFrame()
 
+    def saveStateChange(self):
+
+        data = {}
+        data['frame'] = self.frameNum;
+        wp = []
+        for i, w in enumerate(self.watchPoints):
+            wp.append({ "index" : i, "x" : w.x, "y" : w.y, "isRed" : w.isRed })
+        data['watchPoints'] = wp
+        self.stateChanges.append(data)
+
     def runJob(self):
 
-        log.info(self.__dict__)
+        log.info('Starting job')
 
         cycleOutputAtFrameNum = 999999999999
 
@@ -209,10 +223,7 @@ class VideoJob:
                     cv2.rectangle(frame,(w.x,w.y-20),(w.x,w.y+20),(0,0,255),-1)
 
             if stageChange:
-                self.stateChanges.append(json.dumps({
-                    "frameNum" : self.frameNum,
-                    "watchPoints" : self.watchPoints
-                    },default=jdefault))
+                self.saveStateChange()
 
                 allRed = 1
                 for i, w in enumerate(self.watchPoints):
@@ -236,9 +247,6 @@ class VideoJob:
         log.info('closing last video writer')
         self.closeVideoWriter()
 
-        pp.pprint(self.stateChanges);
-        pp.pprint(self.clips)
-        pp.pprint(self.watchPoints)
         with open('%s_jobmetadata.pickle' % self.outputPrefix, 'wb') as f:
             savedata = {
                     "clips" : self.clips,
