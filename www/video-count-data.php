@@ -72,7 +72,7 @@ if ($format == 'pr') {
 if ($format == 'csv') {
 
 	header('Content-Type: application/csv');
-	header('Content-Disposition: attachment; filename=traffic-'.time().'.csv');
+	header('Content-Disposition: attachment; filename=trafficvision_video'.$videoid.'_'.time().'.csv');
 	header('Pragma: no-cache');
 
 	$cols = array();

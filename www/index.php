@@ -69,6 +69,7 @@ top();
 	<th>%Complete</th>
 	<th>Location</th>
 	<th>Street View</th>
+	<th>Data</th>
 </tr>
 
 <?php
@@ -88,6 +89,11 @@ foreach ($videos as $v) {
 	print "<td>".$perc."</td>";
 	print "<td>".$v['title']."</td>";
 	print "<td><a target=\"blank\" href=\"{$v['streetview']}\"><i class=\"fa fa-external-link\"></i></a></td>";
+	print "<td>
+		<a href=\"video-count-data.php?id={$v['id']}&format=csv\">csv</a>
+		<a href=\"video-count-data.php?id={$v['id']}&format=json\">json</a>
+		<a href=\"video-count-data.php?id={$v['id']}&format=html\">html</a>
+	";
 	print "</tr>";
 }
 
