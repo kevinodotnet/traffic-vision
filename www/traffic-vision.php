@@ -11,6 +11,22 @@ class TrafficVision {
 
 	const OBSERVATION_COUNT = 20;
 
+	static public function getClip ($clipid) {
+		$db = self::getDB();
+		$sql = "
+			select 
+				*
+			from
+				tv_videoclip vc where vc.id = :clipid
+		";
+		pr($sql);
+		$query = $db->prepare($sql);
+		$query->execute(array('clipid'=>$clipid));
+		$res = $query->fetchAll(PDO::FETCH_ASSOC);
+		return $res;
+
+	}
+
 	static public function getVideoCount ($videoid) {
 		$db = self::getDB();
 		$sql = " 
@@ -243,14 +259,26 @@ class TrafficVision {
 	static public function getVideos() {
 		$db = self::getDB();
 		$sql = " 
-			select 
-				v.id,
-				v.recorded,
-				p.id point,
-				p.title
-			from tv_video v
-				join tv_point p on p.id = v.point
-			order by v.recorded desc ";
+ 	select 
+        v.id,
+        left(v.recorded,10) recorded, 
+        p.id point,
+        p.title,
+        p.streetview,
+        count(distinct(vc.id)) clips,
+        sum(case when c.id is null then 0 else 1 end) samples
+      from tv_video v 
+        join tv_point p on p.id = v.point
+        join tv_videoclip vc on vc.video = v.id
+        left join tv_count c on c.clip = vc.id
+      group by
+        v.id,
+        v.recorded, 
+        p.id,
+        p.title,
+        p.streetview
+      order by v.recorded desc
+			";
 		$query = $db->prepare($sql);
 		$query->execute();
 		$res = $query->fetchAll(PDO::FETCH_ASSOC);
@@ -330,4 +358,9 @@ class TrafficVision {
 	}
 
 }
+
+
+
+
+
 
