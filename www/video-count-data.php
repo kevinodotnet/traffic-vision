@@ -20,7 +20,7 @@ $meta = $res['meta'];
 $rows = array();
 
 $row = array();
-foreach (array('videoid','clipid','sampleid','sampletime','userhash') as $k) {
+foreach (array('videoid','clipid','sampleid','sampletime','userhash','url') as $k) {
 	$row[] = $k;
 }
 foreach ($meta as $k => $v) {
@@ -43,6 +43,7 @@ foreach ($data as $clip) {
 		foreach (array('sampleid','sampletime','userhash') as $k) {
 			$row[$k] = $s[$k];
 		}
+		$row['url'] = 'http://app.kevino.ca/traffic-vision/www/view-count.php?id='.$s['sampleid'];
 		foreach ($meta as $k => $v) {
 			if (isset($s['counts'][$k])) {
 				$row[$k] = $s['counts'][$k];
