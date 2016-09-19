@@ -60,7 +60,7 @@ if action == 'status':
 
         #pp.pprint(jobs)
         if 'NextPageToken' in jobs:
-            getmore = 1
+            getmore = 0
             page_token = jobs['NextPageToken']
 
         for job in jobs['Jobs']:
