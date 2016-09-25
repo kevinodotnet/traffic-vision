@@ -75,14 +75,19 @@ top();
 <?php
 $videos = TrafficVision::getVideos();
 foreach ($videos as $v) {
-	$perc = 100*$v['samples']/(2*$v['clips']);
 	$clazz = "btn-success";
 	$doText = "Do a Sample";
-	if ($perc > 100) {
+	if ($v['id'] >= 3) {
+		$perc = 100*$v['samples']/(3*$v['clips']);
+		$perc = sprintf('%d%%',100*$v['samples']/(3*$v['clips']));
+	} else {
+		$perc = 100*$v['samples']/(2*$v['clips']);
+		$perc = sprintf('%d%%',100*$v['samples']/(2*$v['clips']));
+	}
+	if ($perc > 100 || $v['id'] <= 2) {
 		$clazz = "btn-default";
 		$doText = "Goal Reached";
 	}
-	$perc = sprintf('%d%%',100*$v['samples']/(2*$v['clips']));
 	print "<tr>";
 	print "<td><a class=\"btn $clazz btn-xs\" href=\"clip-make-observation.php?videoid={$v['id']}\">$doText</a></td>";
 	print "<td>".$v['recorded']."</td>";

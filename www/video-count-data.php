@@ -98,7 +98,11 @@ if ($format == 'csv') {
 
 top();
 arrayOfMapToTable($res,null,function($k,$v){
-	return $v;
+	if (preg_match('/^http/',$v)) {
+		return "<a href=\"$v\">$v</a>";
+	} else {
+		return $v;
+	}
 });
 bottom();
 #pr($res);
