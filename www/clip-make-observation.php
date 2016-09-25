@@ -3,6 +3,11 @@
 include("include.php");
 include("traffic-vision.php");
 
+$fps = 30;
+if ($_GET['videoid'] == 4) {
+	$fps = 10;
+}
+
 $videoid = $_REQUEST['videoid'];
 $action = $_REQUEST['action'];
 
@@ -216,6 +221,27 @@ $( "input" ).focusout(function() {
 	doCount ++;
 	// $('video').each( function(i) { this.play(); });
 });
+window.onkeydown = function(e) {
+	current = $('#videodiv').find('video').get(0).currentTime;
+	if (e.keyCode == 37 && e.target == document.body) {
+		$('#videodiv').find('video').get(0).currentTime = current -1;
+		e.preventDefault(); 
+	}
+	if (e.keyCode == 39 && e.target == document.body) {
+		$('#videodiv').find('video').get(0).currentTime = current +1;
+		e.preventDefault(); 
+	}
+	if (e.keyCode == 32 && e.target == document.body) {
+		e.preventDefault(); 
+		$('video').each( function(i) {
+			if (this.paused) {
+				this.play();
+			} else {
+				this.pause();
+			}
+		});
+	} 
+};
 $( "body" ).keypress(function(e) {
 	if (doCount == 0) {
 		return;
@@ -238,10 +264,6 @@ $( "body" ).keypress(function(e) {
 				$startframe = preg_replace("/\..*/",'',$startframe);
 				$startframe = preg_replace("/^0*/",'',$startframe);
 
-				$fps = 30;
-				if ($_GET['videoid'] == 4) {
-					$fps = 10;
-				}
 
 				?>
 				current = $('#videodiv').find('video').get(0).currentTime;
