@@ -224,11 +224,11 @@ $( "input" ).focusout(function() {
 window.onkeydown = function(e) {
 	current = $('#videodiv').find('video').get(0).currentTime;
 	if (e.keyCode == 37 && e.target == document.body) {
-		$('#videodiv').find('video').get(0).currentTime = current -1;
+		$('#videodiv').find('video').get(0).currentTime = current - 0.5;
 		e.preventDefault(); 
 	}
 	if (e.keyCode == 39 && e.target == document.body) {
-		$('#videodiv').find('video').get(0).currentTime = current +1;
+		$('#videodiv').find('video').get(0).currentTime = current + 0.5;
 		e.preventDefault(); 
 	}
 	if (e.keyCode == 32 && e.target == document.body) {
