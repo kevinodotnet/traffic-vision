@@ -66,6 +66,7 @@ top();
 <tr>
 	<th>Contribute</th>
 	<th>Recorded</th>
+	<th>Newest Sample At</th>
 	<th>%Complete</th>
 	<th>Location</th>
 	<th>Street View</th>
@@ -91,6 +92,7 @@ foreach ($videos as $v) {
 	print "<tr>";
 	print "<td><a class=\"btn $clazz btn-xs\" href=\"clip-make-observation.php?videoid={$v['id']}\">$doText</a></td>";
 	print "<td>".$v['recorded']."</td>";
+	print "<td>".$v['max_count_date']."</td>";
 	print "<td>".$perc."</td>";
 	print "<td>".$v['title']."</td>";
 	print "<td><a target=\"blank\" href=\"{$v['streetview']}\"><i class=\"fa fa-external-link\"></i></a></td>";
