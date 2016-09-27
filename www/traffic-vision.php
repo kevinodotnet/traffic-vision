@@ -266,7 +266,8 @@ class TrafficVision {
         p.title,
         p.streetview,
         count(distinct(vc.id)) clips,
-        sum(case when c.id is null then 0 else 1 end) samples
+        sum(case when c.id is null then 0 else 1 end) samples,
+				max(c.created) max_count_date
       from tv_video v 
         join tv_point p on p.id = v.point
         join tv_videoclip vc on vc.video = v.id
