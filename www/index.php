@@ -100,6 +100,7 @@ foreach ($videos as $v) {
 		<a href=\"video-count-data.php?id={$v['id']}&format=csv\">csv</a>
 		<a href=\"video-count-data.php?id={$v['id']}&format=json\">json</a>
 		<a href=\"video-count-data.php?id={$v['id']}&format=html\">html</a>
+		<a href=\"video-count-data.php?id={$v['id']}&format=html2\">html2</a>
 	";
 	print "</tr>";
 }

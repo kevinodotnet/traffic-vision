@@ -89,9 +89,7 @@ top();
 	
 	<div class="col-sm-6">
 		<div class="embed-responsive embed-responsive-16by9" id="videodiv">
-			<video autoload="true" controls="controls" class="embed-responsive-item">
-				<source type="video/mp4" src="<?php print $count['video_url']; ?>"/>
-			</video>
+			<video autoload="true" controls="controls" class="embed-responsive-item"><source type="video/mp4" src="<?php print $count['video_url']; ?>"/></video>
 		</div>
 	</div>
 </div>

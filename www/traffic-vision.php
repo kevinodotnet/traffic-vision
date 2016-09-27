@@ -63,6 +63,7 @@ class TrafficVision {
 			select
 				v.id videoid,
 				vc.id clipid,
+				vc.url clipurl,
 				c.id sampleid,
 				d.tag,
 				d.num,
@@ -98,7 +99,7 @@ class TrafficVision {
 				$clip = array();
 
 				# clip level details
-				foreach (array('videoid','clipid') as $k) { $clip[$k] = $r[$k]; }
+				foreach (array('videoid','clipid','clipurl') as $k) { $clip[$k] = $r[$k]; }
 
 				#$cliptags = array(); foreach ($tags as $k => $v) { $cliptags[$k] = array(); }
 				#$clip['tags'] = $cliptags;
