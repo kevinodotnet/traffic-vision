@@ -24,6 +24,7 @@ top();
 	<tr><th>Street View</th><td><a target="_blank" href="<?php print $count['streetview']; ?>">link <i class="fa fa-external-link"></i></a></td></tr>
 	<?php
 	foreach ($count['counts'] as $k=>$v) {
+		if ($v == '') { continue; }
 		?>
 		<tr><th><?php print $k; ?></th><td><?php print $v; ?></td></tr>
 		<?php
