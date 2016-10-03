@@ -85,7 +85,7 @@ foreach ($videos as $v) {
 		$perc = 100*$v['samples']/(2*$v['clips']);
 		$perc = sprintf('%d%%',100*$v['samples']/(2*$v['clips']));
 	}
-	if ($perc > 100 || $v['id'] <= 2) {
+	if ($perc >= 100 || $v['id'] <= 2) {
 		$clazz = "btn-default";
 		$doText = "Goal Reached";
 	}
