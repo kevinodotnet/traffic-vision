@@ -60,7 +60,7 @@ function bottom() {
 	<div class="jumbotron footer">
 	<div class="row">
 		<div class="col-sm-4 text-center">
-			<h4>Traffic Vision<br/><small>a citizen science experiment</small></h4>
+			<h4><a href="http://app.kevino.ca/traffic-vision/www/">Traffic Vision</a><br/><small>a citizen science experiment</small></h4>
 		</div>
 		<div class="col-sm-4 text-center">
 			<h4>Coding:<br/>

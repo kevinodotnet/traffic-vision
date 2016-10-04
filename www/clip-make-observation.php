@@ -154,6 +154,7 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 		</div>
 		<b>Suggested Observations and Things To Look For</b>
 		<ul>
+			<li>Cars turning right against the 'straight-green-arrow'</li>
 			<li>Failing to stop at stop-sign. Running reds.</li>
 			<li>Speeding (if you judge it faster than normal).</li>
 			<li>Cars mounting sidewalks, using pedestrian spaces, to get around other cars.</li>
