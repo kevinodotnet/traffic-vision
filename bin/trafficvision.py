@@ -98,6 +98,11 @@ class VideoJob:
     # output files will bhe "output_[framenum]"
     outputPrefix = "output_"
 
+    # none NONE for "do motion mask"
+    motionMask = None
+    motionKernel = None
+    motionBacksub = None
+
     # Current video reader and index into inFiles that it is reading from
     capIndex = None
     cap = None
@@ -155,7 +160,6 @@ class VideoJob:
         
     def readFrame (self):
 
-
         if self.cap == None:
             self.capIndex = 0
             log.info('Initializing video reader: %s' % self.inFiles[self.capIndex].name)
@@ -193,6 +197,135 @@ class VideoJob:
             wp.append({ "index" : i, "x" : w.x, "y" : w.y, "isRed" : w.isRed })
         data['watchPoints'] = wp
         self.stateChanges.append(data)
+
+    def backgroundFrameFinder(self):
+
+        cv2.namedWindow('frame')
+        cv2.moveWindow('frame',50,50)
+        while True:
+
+            ret, frame = self.readFrame()
+            if ret == False:
+                log.info('done reading input files')
+                break;
+
+            processframe(self.frameNum,frame,self.cap,self.watchPoints,self.clipTotalTimeOffset)
+            showFrame(frame)
+
+    def motion_based_background_image_finder(self):
+
+        cv2.namedWindow('frame')
+        cv2.namedWindow('mask')
+        cv2.namedWindow('bgf')
+        cv2.moveWindow('frame',10,10)
+        cv2.moveWindow('mask',400,10)
+        cv2.moveWindow('bgf',10,400)
+
+        bgf = None
+
+        while True:
+
+            ret, frame = self.readFrame()
+            if ret == False:
+                log.info('done reading input files')
+                break;
+
+            frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+            if self.frameSkip > 0 and self.frameNum % self.frameSkip != 0:
+                # we aren't using every input frame, so skip skip skip
+                log.info('skipping frame')
+                continue
+
+
+            if self.motionKernel == None:
+                self.motionKernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+                self.motionBacksub = cv2.createBackgroundSubtractorMOG2()
+                mask3 = np.zeros_like(frame)
+                #for x in range(0, 1):
+                self.motionBacksub.apply(mask3, None, 0.005)
+
+            if bgf == None:
+                bgf = np.zeros_like(frame)
+
+            mask = self.motionBacksub.apply(frame, None, 0.005)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.motionKernel)
+            mask = cv2.bitwise_not(mask)
+
+            for x in range(len(mask)):
+                for y in range(len(mask[x])):
+                    cell = mask[x][y]
+                    if (cell > 0):
+                        bgfcell = bgf[x][y]
+                        framecell = frame[x][y]
+                        #print "(%d:%d) %d " % (x,y,cell)
+                        if (bgfcell[0] == 0 and bgfcell[1] == 0 and bgfcell[2] == 0):
+                            bgfcell[0] = framecell[0]
+                            bgfcell[1] = framecell[1]
+                            bgfcell[2] = framecell[2]
+
+            #cv2.imshow('frame',frame)
+            #cv2.imshow('mask',mask)
+            cv2.imshow('bgf',bgf)
+            cv2.waitKey(1)
+
+            #print frame.shape
+            #self.writeFrame(frame)
+
+        # end of WhileTrue:
+        cv2.imwrite(self.outputPrefix,bgf)
+
+        log.info('closing last video writer')
+
+    def clipper(self,framesPerClip):
+
+        log.info('Starting job')
+
+        cycleOutputAtFrameNum = framesPerClip
+
+        cv2.namedWindow('frame')
+        cv2.moveWindow('frame',50,50)
+
+        while True:
+
+            ret, frame = self.readFrame()
+            if ret == False:
+                log.info('done reading input files')
+                break;
+
+            if self.frameSkip > 0 and self.frameNum % self.frameSkip != 0:
+                # we aren't using every input frame, so skip skip skip
+                log.info('skipping frame')
+                continue
+
+            if self.motionMask:
+                if self.motionKernel == None:
+                    self.motionKernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+                    self.motionBacksub = cv2.createBackgroundSubtractorMOG2()
+                mask = self.motionBacksub.apply(frame, None, 0.01)
+                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, self.motionKernel)
+
+                mask3 = np.zeros_like(frame)
+                mask3[:,:,0] = mask
+                mask3[:,:,1] = mask
+                mask3[:,:,2] = mask
+
+                print frame.shape
+                print mask3.shape
+                frame = cv2.bitwise_and(frame,mask3)
+
+            processframe(self.frameNum,frame,self.cap,self.watchPoints,self.clipTotalTimeOffset)
+            showFrame(frame)
+            #key = cv2.waitKey(0)
+            #print frame.shape
+            #self.writeFrame(frame)
+
+            if self.frameNum >= cycleOutputAtFrameNum:
+                cycleOutputAtFrameNum = self.frameNum + framesPerClip
+                self.openVideoWriter()
+
+        # end of WhileTrue:
+        log.info('closing last video writer')
+        self.closeVideoWriter()
 
     def runJob(self):
 
@@ -371,13 +504,13 @@ def paint (frameNum,frame,cap,clipTimeOffset):
     time = "%d:%02d:%02.1f" % (h, m, s)
 
     cv2.rectangle(frame,(0,0),(vid_width,100),(0,0,0),-1)
-    cv2.putText(frame, "time %s frame #%d" % (time,frameNum), 
-            (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
-
+    cv2.putText(frame, "#%d %s" % (frameNum,time), (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
+    #cv2.putText(frame, "#%d" % (frameNum), (50,80), cv2.FONT_HERSHEY_DUPLEX, 2, (255,255,255,255), 4)
 
 def processframe (frameNum,frame,cap,watchPoints,clipTimeOffset):
 
     stageChange = 0
+
 
     paint(frameNum,frame,cap,clipTimeOffset)
 

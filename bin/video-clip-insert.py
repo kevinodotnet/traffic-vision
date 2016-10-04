@@ -13,6 +13,8 @@ prefix = sys.argv[2]
 videoid = sys.argv[3]
 paginator = client.get_paginator('list_objects')
 
+# print "bucket %s prefix %s video %s" % (bucket,prefix,videoid)
+
 for page in paginator.paginate(Bucket=bucket,Prefix=prefix):
     for o in page['Contents']:
         if re.search('mp4',o['Key']):
