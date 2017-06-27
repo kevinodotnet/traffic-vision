@@ -128,6 +128,9 @@ class VideoJob:
     # details of current output clip
     clips = []
 
+    frame = None
+    frame2 = None
+
     def closeVideoWriter(self):
         log.info('Closing old video writer...')
         self.vw_out.release()
@@ -269,18 +272,84 @@ class VideoJob:
             cv2.waitKey(1)
 
             #print frame.shape
-            #self.writeFrame(frame)
+            self.writeFrame(frame)
 
         # end of WhileTrue:
         cv2.imwrite(self.outputPrefix,bgf)
 
         log.info('closing last video writer')
 
+    def motion_picker_onto_background_mouse_click(self,event, x, y, flags, param):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            delta=30
+            print "click at x:%d y:%d" % (x,y)
+
+            #cv2.rectangle(self.frame,(x-delta,y-delta),(x+delta,y+delta),(0,255,0),3)
+
+            subset = self.frame[(y-delta):(y+delta),(x-delta):(x+delta)]
+            self.frame2[(y-delta):(y+delta),(x-delta):(x+delta)] = subset
+
+            #cv2.circle(self.frame,(x,y),radius,(255,0,0),-1)
+            #cv2.circle(self.frame2,(x,y),radius,(255,0,0),-1)
+            cv2.imshow('frame',self.frame)
+            cv2.imshow('frame2',self.frame2)
+
+    def motion_picker_onto_background(self,backgroundFile):
+
+        cv2.namedWindow('frame');
+        cv2.moveWindow('frame',0,0)
+        cv2.setMouseCallback('frame', self.motion_picker_onto_background_mouse_click)
+        cv2.namedWindow('frame2');
+        cv2.moveWindow('frame2',500,20)
+
+        log.info('Starting job')
+
+        self.motionKernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+        self.motionBacksub = cv2.createBackgroundSubtractorMOG2()
+
+        while True:
+
+            ret, frame = self.readFrame()
+            if ret == False:
+                log.info('done reading input files')
+                break;
+
+            if self.frameSkip > 0 and self.frameNum % self.frameSkip != 0:
+                # we aren't using every input frame, so skip skip skip
+                log.info('skipping frame')
+                continue
+
+            frame = cv2.resize(frame, (0,0), fx=0.5, fy=0.5) 
+
+            self.frame = frame 
+            self.frame2 = cv2.imread(backgroundFile)
+
+            cv2.imshow('frame',self.frame)
+            cv2.imshow('frame2',self.frame2)
+            cv2.waitKey(0)
+
+            outfile = '%s_%.09d.png' % (self.outputPrefix,self.frameNum)
+            cv2.imwrite(outfile,self.frame2)
+
+            #background = cv2.imread(backgroundFile)
+            #np.copyto(background,self.frame,casting='equiv',where=self.frame)
+            #cv2.imshow('frame2',background)
+            #cv2.waitKey(0)
+
+#            if self.frameNum >= cycleOutputAtFrameNum:
+#                cycleOutputAtFrameNum = self.frameNum + framesPerClip
+#                self.openVideoWriter()
+
+        # end of WhileTrue:
+        log.info('closing last video writer')
+        self.closeVideoWriter()
+
     def clipper(self,framesPerClip):
 
         log.info('Starting job')
 
         cycleOutputAtFrameNum = framesPerClip
+        log.info('cycleOutputAtFrameNum: %d' % cycleOutputAtFrameNum)
 
         cv2.namedWindow('frame')
         cv2.moveWindow('frame',50,50)
@@ -294,7 +363,9 @@ class VideoJob:
 
             if self.frameSkip > 0 and self.frameNum % self.frameSkip != 0:
                 # we aren't using every input frame, so skip skip skip
-                log.info('skipping frame')
+                #print frame
+                #frame.copyTo(background,frame)
+                #log.info('skipping frame')
                 continue
 
             if self.motionMask:
@@ -317,10 +388,11 @@ class VideoJob:
             showFrame(frame)
             #key = cv2.waitKey(0)
             #print frame.shape
-            #self.writeFrame(frame)
+            self.writeFrame(frame)
 
             if self.frameNum >= cycleOutputAtFrameNum:
                 cycleOutputAtFrameNum = self.frameNum + framesPerClip
+                log.info('cycleOutputAtFrameNum: %d' % cycleOutputAtFrameNum)
                 self.openVideoWriter()
 
         # end of WhileTrue:
