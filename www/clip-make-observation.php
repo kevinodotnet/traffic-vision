@@ -33,6 +33,7 @@ if ($action == 'save') {
 		'clipid' => $_REQUEST['clipid'],
 		'counts' => array(
 			'car' => $_REQUEST['car'],
+			'mupBike' => $_REQUEST['mupBike'],
 			'bike' => $_REQUEST['bike'],
 			'ped' => $_REQUEST['ped']
 		)
@@ -86,14 +87,17 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 		<b>Quick Instructions:</b>
 		<ul>
 			<li><a target="_blank" href="<?php print $video['streetview']; ?>">Open Google StreetView</a> to familiarize yourself with this street/intersection.</li>
+			<li>Use the keyboard shortcuts 'm' and 'b' to count bikes on the MUP and other bikes</li>
 			<li>Play the video, watch for problematic interactions between cars/bikes/pedestrians.</li>
 			<li>When you see one press 'o'. The video will pause automatically, and focus will jump to an observation box.</li>
 			<li>Describe the problem in your own words</li>
 			<li>The frame number should be populated for you.</li>
 			<li>Click play, rinse, repeat!</li>
-			<li>(fyi: we are no longer counting cars/bikes/peds)</li>
+			<!--<li>(fyi: we are no longer counting cars/bikes/peds)</li>-->
 			<!-- <li>Count all pedestrians, even if they are on a sidewalk that doesn't "cross" a road.</li> -->
+			<!--
 			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
+			-->
 		</ul>
 		<hr/>
 
@@ -112,29 +116,31 @@ function up(id) {
 <div id="observe" class="row" style="padding-top: 10px;">
 	<div class="col-sm-5">
 
-		<!--
-		<b>Count:</b> <small>(hint: use 'c', 'b' and 'p' keys to count!)</small>
+		<!-- 
+		<b>Count:</b>
+		<small>(hint: use 'c', 'b' and 'p' keys to count!)</small> -->
 		<div class="row">
 			<div class="col-sm-4 form-group">
 				<div class="input-group">
-					<div class="input-group-addon"><a href="javascript:up('car');">cars <i class="fa fa-plus"></i></a> </div>
-					<input id='car' class="form-control" type="text" name="car" value="0"/>
+					<div class="input-group-addon"><a href="javascript:up('mupBike');">(m)upBike <i class="fa fa-plus"></i></a> </div>
+					<input id='mupBike' class="form-control" type="text" name="mupBike" value="0"/>
 				</div>
 			</div>
 			<div class="col-sm-4 form-group">
 				<div class="input-group">
-					<div class="input-group-addon"><a href="javascript:up('bike');">bikes <i class="fa fa-plus"></i></a> </div>
+					<div class="input-group-addon"><a href="javascript:up('bike');">(b)ikes <i class="fa fa-plus"></i></a> </div>
 					<input id='bike' class="form-control" type="text" name="bike" value="0"/>
 				</div>
 			</div>
+			<!--
 			<div class="col-sm-4 form-group">
 				<div class="input-group">
 					<div class="input-group-addon"><a href="javascript:up('ped');">peds <i class="fa fa-plus"></i></a> </div>
 					<input id='ped' class="form-control" type="text" name="ped" value="0"/>
 				</div>
 			</div>
+			-->
 		</div>
-		-->
 
 		<input class="form-control btn-primary" type="Submit" value="Submit Data for Clip #<?php print $clip['id']; ?>"/>
 		<?php
@@ -171,7 +177,9 @@ function up(id) {
 			<li>Bikes on sidewalks/crosswalks</li>
 			<li>Cars blocking crosswalks, bike lanes</li>
 			<li>Jaywalking; or crossing against the hand because the walk signal never goes on</li>
+			<!--
 			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
+			-->
 		</ul>
 		<b>Optional but helpful</b>: if you can note the "frame#" as well that's helpful.
 	</div>
@@ -179,8 +187,10 @@ function up(id) {
 
 </form>
 
+<!--
 <div id="long">
 <h2>Instructions</h2>
+
 
 <p>
 	Each traffic video clip is about a minute long, and shows one cycle of a traffic intersection. The clip starts at 10 seconds after 
@@ -203,11 +213,8 @@ function up(id) {
 	Some sample observations. It is literally any observation you have, in your own words.
 <b>Contact kevino@kevino.net or @odonnell_k if you need help or have suggestions!</b>
 </p>
-
-
-
-
 </div>
+-->
 
 <script>
 doCount = 1;
@@ -249,6 +256,7 @@ $( "body" ).keypress(function(e) {
 	var code = e.keyCode || e.which;
 	var k = String.fromCharCode(code);
 	if (k == 'c') { up('car'); }
+	if (k == 'm') { up('mupBike'); }
 	if (k == 'b') { up('bike'); }
 	if (k == 'p') { up('ped'); }
 	if (k == 'o') { 
