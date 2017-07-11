@@ -4,6 +4,11 @@ import re
 import datetime
 import pprint
 
+# Usage
+#
+# python elastictranscoder.py transcode s3://s3.kevino.ca/path/inside/bucket
+
+
 pp = pprint.PrettyPrinter(indent=2)
 
 client = boto3.client('elastictranscoder')
@@ -23,10 +28,14 @@ if pipeline == None:
     exit(0)
 
 if action == 'transcode':
-    inkey = sys.argv[2]
+    inpath = sys.argv[2]
+    inkey = re.sub(r'^s3://[^/]+/','',inpath)
+    if len(sys.argv[2]) > 2:
+        outkey = sys.argv[3]
+    else:
+        outkey = re.sub(r'\....$','.mp4',inkey)
+
     # for now we are cheating, and bucket is stripped because it is defined in AWS pipeline
-    inkey = re.sub(r'^s3://[^/]+/','',inkey)
-    outkey = re.sub(r'\....$','.mp4',inkey)
 
     presetId = '1351620000001-000010' # mp4, System preset generic 720p
     jobIn = { 'Key': inkey }
@@ -60,7 +69,7 @@ if action == 'status':
 
         #pp.pprint(jobs)
         if 'NextPageToken' in jobs:
-            getmore = 1
+            getmore = 0
             page_token = jobs['NextPageToken']
 
         for job in jobs['Jobs']:

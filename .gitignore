@@ -3,3 +3,5 @@ config.php
 *.swo
 *.pyc
 *.log
+var/20*
+.DS_Store
