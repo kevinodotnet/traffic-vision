@@ -142,7 +142,7 @@ function up(id) {
 			-->
 		</div>
 
-		<input class="form-control btn-primary" type="Submit" value="Submit Data for Clip #<?php print $clip['id']; ?>"/>
+		<input class="form-control btn-success" type="Submit" value="Submit Data for Clip #<?php print $clip['id']; ?>"/>
 		<?php
 		for ($x = 0; $x < TrafficVision::OBSERVATION_COUNT; $x++) {
 			?>
@@ -160,6 +160,7 @@ function up(id) {
 			<?php
 		}
 		?>
+		<input class="form-control btn-success" type="Submit" value="Submit Data for Clip #<?php print $clip['id']; ?>"/>
 	</div>
 
 	<div class="col-sm-7">
