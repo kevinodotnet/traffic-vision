@@ -30,10 +30,10 @@ if pipeline == None:
 if action == 'transcode':
     inpath = sys.argv[2]
     inkey = re.sub(r'^s3://[^/]+/','',inpath)
-    if len(sys.argv[2]) > 2:
-        outkey = sys.argv[3]
-    else:
-        outkey = re.sub(r'\....$','.mp4',inkey)
+    print "inkey: %s" % inkey
+    outkey = re.sub(r'\....$','.mp4',inkey)
+    #if len(sys.argv[2]) > 2:
+    #    outkey = sys.argv[3]
 
     # for now we are cheating, and bucket is stripped because it is defined in AWS pipeline
 

@@ -9,5 +9,6 @@ echo $out
 
 #echo /Applications/HandBrakeCLI --width 1920 --height 1080 -i $in -o $out 
 #/Applications/HandBrakeCLI --width 1280 --height 720 -i $in -o $out 
-/Applications/HandBrakeCLI -i $in -o $out 
+/Applications/HandBrakeCLI --width 1024 --height 576 -i $in -o $out 
+#/Applications/HandBrakeCLI -i $in -o $out 
 
