@@ -8,7 +8,7 @@ top();
 ?>
 
 <div class="row">
-	<div class="col-sm-4">
+	<div class="col-sm-6">
 		<h1 class="text-center">What is Traffic Vision?</h1>
 		<p>Traffic Vision is a simple croudsourcing engine for
 		measuring traffic (drivers, cyclists, pedestrians)
@@ -20,7 +20,7 @@ top();
 		<p>The Ottawa Citizen <a href="http://ottawacitizen.com/driving/citizen-science-hits-the-road-in-kitchissippi-traffic-study">wrote up an article</a>
 		about the community effort. Lots of interesting tidbits there for additional reading.</p>
 	</div>
-	<div class="col-sm-4">
+	<div class="col-sm-6">
 		<h1 class="text-center">What happens then?</h1>
 		<p>
 		We try to get multiple samples of the same clip by 
@@ -43,7 +43,9 @@ top();
 		
 
 	</div>
-	<div class="col-sm-4">
+</div>
+<div class="row">
+	<div class="col-sm-6">
 		<h1 class="text-center">How can I help?</h1>
 		<p>
 		The most valuable to contribution possible is to pick one
@@ -57,6 +59,20 @@ top();
 		best to contact me first. Volunteer time to run the 
 		video through the processor is limited (but I love the
 		challenge, so don't be shy).
+		</p>
+	</div>
+	<div class="col-sm-6">
+		<h1 class="text-center">Upload a video!</h1>
+		<p>
+		Have you identified a problem area/intersection/etc
+		and would like the crowd to analyze it? 
+		<a href="upload-video.php">Use the video upload form</a> that
+		can accept huge files (multiple gigabytes). Upload your video
+		and I'll get an email when it's done, and take it from there.
+		</p>
+		<p>
+		If you're not sure how to record the video, drop kevino@kevino.net
+		an email first.
 		</p>
 	</div>
 </div>
