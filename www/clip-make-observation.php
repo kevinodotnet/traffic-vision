@@ -32,8 +32,9 @@ if ($action == 'save') {
 	$count = array(
 		'clipid' => $_REQUEST['clipid'],
 		'counts' => array(
+			'carblock' => $_REQUEST['carblock'],
+			'carwait' => $_REQUEST['carwait'],
 			'car' => $_REQUEST['car'],
-			'mupBike' => $_REQUEST['mupBike'],
 			'bike' => $_REQUEST['bike'],
 			'ped' => $_REQUEST['ped']
 		)
@@ -84,23 +85,6 @@ $clip = TrafficVision::getVideoClipForObservation($videoid);
 	</div>
 </div>
 
-		<b>Quick Instructions:</b>
-		<ul>
-			<li><a target="_blank" href="<?php print $video['streetview']; ?>">Open Google StreetView</a> to familiarize yourself with this street/intersection.</li>
-			<li>Use the keyboard shortcuts 'm' and 'b' to count bikes on the MUP and other bikes</li>
-			<li>Play the video, watch for problematic interactions between cars/bikes/pedestrians.</li>
-			<li>When you see one press 'o'. The video will pause automatically, and focus will jump to an observation box.</li>
-			<li>Describe the problem in your own words</li>
-			<li>The frame number should be populated for you.</li>
-			<li>Click play, rinse, repeat!</li>
-			<!--<li>(fyi: we are no longer counting cars/bikes/peds)</li>-->
-			<!-- <li>Count all pedestrians, even if they are on a sidewalk that doesn't "cross" a road.</li> -->
-			<!--
-			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
-			-->
-		</ul>
-		<hr/>
-
 <script>
 function up(id) {
 	id = '#'+id;
@@ -116,33 +100,43 @@ function up(id) {
 <div id="observe" class="row" style="padding-top: 10px;">
 	<div class="col-sm-5">
 
+	<center>
+	(See below the video for instructions)
+	</center>
+
 		<!-- 
 		<b>Count:</b>
 		<small>(hint: use 'c', 'b' and 'p' keys to count!)</small> -->
 		<div class="row">
+			<!--
 			<div class="col-sm-4 form-group">
 				<div class="input-group">
 					<div class="input-group-addon"><a href="javascript:up('mupBike');">(m)upBike <i class="fa fa-plus"></i></a> </div>
 					<input id='mupBike' class="form-control" type="text" name="mupBike" value="0"/>
 				</div>
 			</div>
+			-->
 			<div class="col-sm-4 form-group">
 				<div class="input-group">
 					<div class="input-group-addon"><a href="javascript:up('bike');">(b)ikes <i class="fa fa-plus"></i></a> </div>
 					<input id='bike' class="form-control" type="text" name="bike" value="0"/>
 				</div>
 			</div>
-			<!--
 			<div class="col-sm-4 form-group">
 				<div class="input-group">
-					<div class="input-group-addon"><a href="javascript:up('ped');">peds <i class="fa fa-plus"></i></a> </div>
-					<input id='ped' class="form-control" type="text" name="ped" value="0"/>
+					<div class="input-group-addon"><a href="javascript:up('carblock');">(c)arblocks <i class="fa fa-plus"></i></a> </div>
+					<input id='carblock' class="form-control" type="text" name="carblock" value="0"/>
 				</div>
 			</div>
-			-->
+			<div class="col-sm-4 form-group">
+				<div class="input-group">
+					<div class="input-group-addon"><a href="javascript:up('carwait');">car(w)aits <i class="fa fa-plus"></i></a> </div>
+					<input id='carwait' class="form-control" type="text" name="carwait" value="0"/>
+				</div>
+			</div>
 		</div>
 
-		<input class="form-control btn-success" type="Submit" value="Submit Data for Clip #<?php print $clip['id']; ?>"/>
+		<input class="form-control btn-success" type="Submit" value="Submit Data for Clip"/>
 		<?php
 		for ($x = 0; $x < TrafficVision::OBSERVATION_COUNT; $x++) {
 			?>
@@ -169,20 +163,28 @@ function up(id) {
 				<source type="video/mp4" src="<?php print $clip['url']; ?>"/>
 			</video>
 		</div>
-		<b>Suggested Observations and Things To Look For</b>
+		<a name="#instructions"></a><b>Instructions:</b>
 		<ul>
-			<li>Cars turning right against the 'straight-green-arrow'</li>
-			<li>Failing to stop at stop-sign. Running reds.</li>
-			<li>Speeding (if you judge it faster than normal).</li>
-			<li>Cars mounting sidewalks, using pedestrian spaces, to get around other cars.</li>
-			<li>Bikes on sidewalks/crosswalks</li>
-			<li>Cars blocking crosswalks, bike lanes</li>
-			<li>Jaywalking; or crossing against the hand because the walk signal never goes on</li>
-			<!--
-			<li><a href="#long">Read the long instructions</a> for more details or to contact the help team.</li>
-			-->
+			<li><a target="_blank" href="<?php print $video['streetview']; ?>">Open Google StreetView</a> to familiarize yourself with this street/intersection.</li>
+			<li>Press
+			<ul>
+			<li>"<b>b</b>" to count bikes going by.</li>
+			<li>"<b>c</b>" to count cars that block the bike lane.</li>
+			<li>"<b>w</b>" to count cars that wait without blocking the lane.</li>
+			<li>Or, click the buttons above.</li>
+			</ul>
+			</li>
+			<li>If you see something else that seems important, press "o" to make an observation.
+			<ul>
+			<li>The video will pause automatically, and focus will jump to an observation box.</li>
+			<li>Describe the problem in your own words</li>
+			<li>The frame number should be populated for you.</li>
+			<li>Click play, rinse, repeat!</li>
+			</ul>
+			</li>
+			<li>Click the green <b>Submit Data for Clip</b> button to save.</li>
 		</ul>
-		<b>Optional but helpful</b>: if you can note the "frame#" as well that's helpful.
+		<hr/>
 	</div>
 </div>
 
@@ -256,7 +258,8 @@ $( "body" ).keypress(function(e) {
 	}
 	var code = e.keyCode || e.which;
 	var k = String.fromCharCode(code);
-	if (k == 'c') { up('car'); }
+	if (k == 'c') { up('carblock'); }
+	if (k == 'w') { up('carwait'); }
 	if (k == 'm') { up('mupBike'); }
 	if (k == 'b') { up('bike'); }
 	if (k == 'p') { up('ped'); }
