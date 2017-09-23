@@ -52,7 +52,7 @@ if action == 'status':
     getmore = 1
     page_token = ''
     while getmore == 1:
-        getmore = 0
+        #getmore = 0
 
         if status == 'all':
             print "Getting all jobs in default-pipelin"
@@ -69,7 +69,7 @@ if action == 'status':
 
         #pp.pprint(jobs)
         if 'NextPageToken' in jobs:
-            getmore = 0
+            getmore = 1
             page_token = jobs['NextPageToken']
 
         for job in jobs['Jobs']:
